@@ -8,7 +8,7 @@ export interface Card {
   exerciseName: string;
 }
 
-export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J' | 'Q' | 'K'];
 export const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 
 export const DEFAULT_EXERCISES = [
@@ -17,18 +17,29 @@ export const DEFAULT_EXERCISES = [
   "Dips", "Diamond Pushups", "Russian Twists", "Leg Raises"
 ];
 
-export const DEFAULT_RANK_MAPPING: Record<Rank, string> = RANKS.reduce((acc, rank, idx) => {
-  acc[rank] = DEFAULT_EXERCISES[idx] || "Active";
-  return acc;
-}, {} as Record<Rank, string>);
+export const DEFAULT_RANK_MAPPING: Record<Rank, string> = {
+  'A': "Pushups",
+  '2': "Squats",
+  '3': "Lunges",
+  '4': "Plank (sec)",
+  '5': "Burpees",
+  '6': "Mountain Climbers",
+  '7': "Situps",
+  '8': "Jumping Jacks",
+  '9': "High Knees",
+  '10': "Dips",
+  'J': "Diamond Pushups",
+  'Q': "Russian Twists",
+  'K': "Leg Raises"
+};
 
 export function generateDeck(numSuits: number, rankToExercise: Record<Rank, string>): Card[] {
   const deck: Card[] = [];
   const activeSuits = SUITS.slice(0, numSuits);
+  const ranks: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
   for (const suit of activeSuits) {
-    for (const rank of RANKS) {
-      // Use the provided mapping, but trim it and fallback to default if it's blank
+    for (const rank of ranks) {
       const name = rankToExercise[rank]?.trim() || DEFAULT_RANK_MAPPING[rank];
       deck.push({
         suit,
@@ -54,9 +65,21 @@ export function calculateTotalTime(
   roundRestTime: number,
   numSuits: number
 ): number {
+  if (numCards === 0) return 0;
+
+  // Number of work phases
   const totalWork = numCards * workTime;
-  const totalBetweenRest = (numCards - 1) * restTime;
-  const totalRoundRest = numSuits > 1 ? (numSuits - 1) * roundRestTime : 0;
   
-  return totalWork + totalBetweenRest + totalRoundRest;
+  // Transitions between cards
+  const totalTransitions = numCards - 1;
+  
+  // Number of round rests (at the end of each suit except the last)
+  const numRoundRests = numSuits > 1 ? numSuits - 1 : 0;
+  
+  // Number of normal rests
+  const numNormalRests = totalTransitions - numRoundRests;
+  
+  const totalRest = (numNormalRests * restTime) + (numRoundRests * roundRestTime);
+  
+  return totalWork + totalRest;
 }

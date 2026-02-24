@@ -27,13 +27,19 @@ export default function Home() {
     setView("active");
   };
 
-  const totalEstimatedTime = calculateTotalTime(
+  const totalSeconds = calculateTotalTime(
     numSuits * 13,
     workTime,
     restTime,
     roundRestTime,
     numSuits
   );
+
+  const formatTotalTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   if (view === "active") {
     return (
@@ -140,10 +146,15 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
                   <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
-                  <SpinDial label="Round Rest" value={roundRestTime} onChange={setRoundRestTime} />
+                  <SpinDial 
+                    label="Round Rest" 
+                    value={roundRestTime} 
+                    onChange={setRoundRestTime} 
+                    min={0}
+                  />
                   <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
-                    <p className="text-3xl font-black tabular-nums">{Math.ceil(totalEstimatedTime / 60)}:00</p>
+                    <p className="text-3xl font-black tabular-nums">{formatTotalTime(totalSeconds)}</p>
                   </div>
                 </div>
               </Card>
