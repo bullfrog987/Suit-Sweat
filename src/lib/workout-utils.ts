@@ -8,14 +8,8 @@ export interface Card {
   exerciseName: string;
 }
 
-export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J' | 'Q' | 'K'];
+export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 export const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
-
-export const DEFAULT_EXERCISES = [
-  "Pushups", "Squats", "Lunges", "Plank (sec)", "Burpees", 
-  "Mountain Climbers", "Situps", "Jumping Jacks", "High Knees", 
-  "Dips", "Diamond Pushups", "Russian Twists", "Leg Raises"
-];
 
 export const DEFAULT_RANK_MAPPING: Record<Rank, string> = {
   'A': "Pushups",
@@ -36,10 +30,9 @@ export const DEFAULT_RANK_MAPPING: Record<Rank, string> = {
 export function generateDeck(numSuits: number, rankToExercise: Record<Rank, string>): Card[] {
   const deck: Card[] = [];
   const activeSuits = SUITS.slice(0, numSuits);
-  const ranks: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
   for (const suit of activeSuits) {
-    for (const rank of ranks) {
+    for (const rank of RANKS) {
       const name = rankToExercise[rank]?.trim() || DEFAULT_RANK_MAPPING[rank];
       deck.push({
         suit,
@@ -70,14 +63,15 @@ export function calculateTotalTime(
   // Number of work phases
   const totalWork = numCards * workTime;
   
-  // Transitions between cards
-  const totalTransitions = numCards - 1;
+  // Total transitions between cards (there are n-1 gaps in n cards)
+  const totalGaps = numCards - 1;
   
-  // Number of round rests (at the end of each suit except the last)
+  // Round rests occur after every 13 cards (between suits)
+  // If we have 1 suit, 0 round rests. If 2 suits, 1 round rest.
   const numRoundRests = numSuits > 1 ? numSuits - 1 : 0;
   
-  // Number of normal rests
-  const numNormalRests = totalTransitions - numRoundRests;
+  // Normal rests fill the remaining gaps
+  const numNormalRests = Math.max(0, totalGaps - numRoundRests);
   
   const totalRest = (numNormalRests * restTime) + (numRoundRests * roundRestTime);
   

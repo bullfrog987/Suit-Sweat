@@ -9,7 +9,7 @@ import { SpinDial } from "@/components/workout/SpinDial";
 import { ExerciseSetup } from "@/components/workout/ExerciseSetup";
 import { WorkoutRunner } from "@/components/workout/WorkoutRunner";
 import { generateDeck, calculateTotalTime, Rank, Card as WorkoutCard, DEFAULT_RANK_MAPPING } from "@/lib/workout-utils";
-import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History, LayoutGrid } from "lucide-react";
+import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History, LayoutGrid, Info } from "lucide-react";
 
 export default function Home() {
   const [view, setView] = useState<"setup" | "active" | "complete">("setup");
@@ -146,12 +146,20 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
                   <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
-                  <SpinDial 
-                    label="Round Rest" 
-                    value={roundRestTime} 
-                    onChange={setRoundRestTime} 
-                    min={0}
-                  />
+                  <div className="space-y-2">
+                    <SpinDial 
+                      label="Round Rest" 
+                      value={roundRestTime} 
+                      onChange={setRoundRestTime} 
+                      min={0}
+                    />
+                    {numSuits === 1 && (
+                      <div className="flex items-start gap-2 px-1 text-[9px] text-muted-foreground italic uppercase tracking-wider">
+                        <Info className="w-3 h-3 text-accent flex-shrink-0" />
+                        <span>Only applies between suits (2+ suits)</span>
+                      </div>
+                    )}
+                  </div>
                   <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
                     <p className="text-3xl font-black tabular-nums">{formatTotalTime(totalSeconds)}</p>
