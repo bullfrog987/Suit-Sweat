@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react";
-import { Card as WorkoutCard, Suit } from "@/lib/workout-utils";
+import { useState, useEffect } from "react";
+import { Card as WorkoutCard, Suit, calculateTotalTime } from "@/lib/workout-utils";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade, Timer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -25,12 +25,20 @@ export function WorkoutRunner({
   workTime, 
   restTime, 
   roundRestTime, 
+  numSuits,
   onComplete 
 }: WorkoutRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("work");
   const [timeLeft, setTimeLeft] = useState(workTime);
   const [isActive, setIsActive] = useState(false);
+  
+  // Initialize total remaining seconds based on full deck and settings
+  const [totalRemaining, setTotalRemaining] = useState(() => 
+    calculateTotalTime(deck.length, workTime, restTime, roundRestTime, numSuits)
+  );
+  
+  // Track total elapsed for calorie calculation at end
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const currentCard = deck[currentIndex];
@@ -43,11 +51,16 @@ export function WorkoutRunner({
     if (isActive) {
       interval = setInterval(() => {
         setElapsedSeconds((prev) => prev + 1);
+        
+        // Decrement phase timer
         if (timeLeft > 0) {
           setTimeLeft((prev) => prev - 1);
         } else {
           handlePhaseTransition();
         }
+
+        // Decrement total remaining timer
+        setTotalRemaining((prev) => Math.max(0, prev - 1));
       }, 1000);
     }
 
@@ -76,7 +89,7 @@ export function WorkoutRunner({
 
   const finishWorkout = () => {
     setIsActive(false);
-    const totalMinutes = Math.floor(elapsedSeconds / 60);
+    const totalMinutes = Math.ceil(elapsedSeconds / 60);
     onComplete({
       totalTime: totalMinutes || 1,
       calories: (totalMinutes || 1) * 8,
@@ -84,10 +97,13 @@ export function WorkoutRunner({
   };
 
   const skipPhase = () => {
+    // When skipping, subtract the remaining time of the CURRENT phase from the total remaining
+    // This ensures the total timer stays accurate to the future work/rest balance
+    setTotalRemaining((prev) => Math.max(0, prev - timeLeft));
     handlePhaseTransition();
   };
 
-  const formatElapsedTime = (seconds: number) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -103,18 +119,18 @@ export function WorkoutRunner({
   };
 
   const totalTimeForPhase = phase === "work" ? workTime : (phase === "round-rest" ? roundRestTime : restTime);
-  // Calculate progress as "filling": 0% at start, 100% when timeLeft reaches 0
-  const progress = ((totalTimeForPhase - timeLeft) / totalTimeForPhase) * 100;
+  // Filling progress bar: 0% at start of phase, 100% at end
+  const progress = totalTimeForPhase > 0 ? ((totalTimeForPhase - timeLeft) / totalTimeForPhase) * 100 : 100;
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 w-full max-w-2xl mx-auto py-6 min-h-screen px-4 overflow-hidden">
       {/* Top Bar Stats */}
       <div className="w-full flex justify-between items-center px-4 py-3 bg-secondary/30 rounded-2xl border border-border/50 backdrop-blur-sm">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total Time</span>
+          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Time Remaining</span>
           <div className="flex items-center gap-2">
             <Timer className="w-4 h-4 text-primary" />
-            <span className="text-base font-black tabular-nums">{formatElapsedTime(elapsedSeconds)}</span>
+            <span className="text-base font-black tabular-nums">{formatTime(totalRemaining)}</span>
           </div>
         </div>
         <div className="flex flex-col items-end">
