@@ -1,11 +1,11 @@
+
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Card as WorkoutCard, Suit, Rank } from "@/lib/workout-utils";
+import { useState, useEffect, useRef } from "react";
+import { Card as WorkoutCard, Suit } from "@/lib/workout-utils";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade, Timer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { aiWorkoutCoach } from "@/ai/flows/ai-workout-coach";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -31,28 +31,10 @@ export function WorkoutRunner({
   const [phase, setPhase] = useState<Phase>("work");
   const [timeLeft, setTimeLeft] = useState(workTime);
   const [isActive, setIsActive] = useState(false);
-  const [aiMessage, setAiMessage] = useState<string>("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const startTimeRef = useRef<number>(Date.now());
 
   const currentCard = deck[currentIndex];
   const nextCard = deck[currentIndex + 1];
-
-  const fetchAiCoach = useCallback(async (currentPhase: Phase, exercise?: string) => {
-    try {
-      const result = await aiWorkoutCoach({
-        workoutPhase: currentPhase,
-        currentExercise: exercise
-      });
-      setAiMessage(result.message);
-    } catch (e) {
-      // Errors handled by global emitter if necessary
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAiCoach(phase, currentCard?.exerciseName);
-  }, [currentIndex, phase, currentCard, fetchAiCoach]);
 
   // Main Timer Logic
   useEffect(() => {
@@ -121,27 +103,24 @@ export function WorkoutRunner({
   };
 
   const totalTimeForPhase = phase === "work" ? workTime : (phase === "round-rest" ? roundRestTime : restTime);
-  const progress = (timeLeft / totalTimeForPhase) * 100;
+  // Calculate progress as "filling": 0% at start, 100% when timeLeft reaches 0
+  const progress = ((totalTimeForPhase - timeLeft) / totalTimeForPhase) * 100;
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 w-full max-w-2xl mx-auto py-6 min-h-screen px-4 overflow-hidden">
       {/* Top Bar Stats */}
-      <div className="w-full flex justify-between items-center px-4 py-2 bg-secondary/30 rounded-full border border-border/50 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Timer className="w-4 h-4 text-primary" />
-          <span className="text-sm font-black tabular-nums">{formatElapsedTime(elapsedSeconds)}</span>
+      <div className="w-full flex justify-between items-center px-4 py-3 bg-secondary/30 rounded-2xl border border-border/50 backdrop-blur-sm">
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total Time</span>
+          <div className="flex items-center gap-2">
+            <Timer className="w-4 h-4 text-primary" />
+            <span className="text-base font-black tabular-nums">{formatElapsedTime(elapsedSeconds)}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Progress</span>
-          <span className="text-sm font-black">{currentIndex + 1}/{deck.length}</span>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Round</span>
+          <span className="text-base font-black">{currentIndex + 1} <span className="text-muted-foreground font-medium">/ {deck.length}</span></span>
         </div>
-      </div>
-
-      {/* AI Motivation */}
-      <div className="w-full text-center min-h-[3rem] flex items-center justify-center px-4">
-        <p className="text-accent italic font-medium text-base md:text-lg leading-tight animate-in fade-in slide-in-from-top-1 duration-500">
-          {aiMessage ? `"${aiMessage}"` : "Concentrate. One rep at a time."}
-        </p>
       </div>
 
       {/* Main Card Display */}
@@ -173,7 +152,7 @@ export function WorkoutRunner({
         ) : (
           <div className="flex flex-col items-center justify-center space-y-8 animate-in zoom-in duration-500">
             <h2 className="text-7xl font-black tracking-widest text-white/90 drop-shadow-2xl">
-              {phase === "round-rest" ? "ROUND REST" : "REST"}
+              {phase === "round-rest" ? "BREAK" : "REST"}
             </h2>
             {nextCard && (
               <div className="bg-black/20 p-6 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
@@ -186,16 +165,16 @@ export function WorkoutRunner({
       </Card>
 
       {/* Timer & Controls */}
-      <div className="w-full max-w-md space-y-4 pb-4">
-        <div className="text-center space-y-2">
+      <div className="w-full max-w-md space-y-6 pb-6">
+        <div className="text-center space-y-4">
           <div className={cn(
-            "text-7xl font-black tabular-nums tracking-tighter transition-colors duration-300",
+            "text-8xl font-black tabular-nums tracking-tighter transition-colors duration-300",
             phase === "work" ? "text-primary" : "text-emerald-400"
           )}>
             {timeLeft}s
           </div>
-          <div className="px-8">
-            <Progress value={progress} className="h-3 bg-secondary" />
+          <div className="px-6">
+            <Progress value={progress} className="h-4 bg-secondary" />
           </div>
         </div>
 
