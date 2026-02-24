@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +8,17 @@ import { SpinDial } from "@/components/workout/SpinDial";
 import { ExerciseSetup } from "@/components/workout/ExerciseSetup";
 import { WorkoutRunner } from "@/components/workout/WorkoutRunner";
 import { generateDeck, calculateTotalTime, Rank, Card as WorkoutCard, DEFAULT_RANK_MAPPING } from "@/lib/workout-utils";
-import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History, LayoutGrid, Info } from "lucide-react";
+import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History, LayoutGrid, Info, Palette } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type Theme = "classic" | "midnight" | "toxic" | "inferno";
+
+const THEMES: { id: Theme; label: string; color: string }[] = [
+  { id: "classic", label: "Classic", color: "bg-[#7c3aed]" },
+  { id: "midnight", label: "Midnight", color: "bg-[#2563eb]" },
+  { id: "toxic", label: "Toxic", color: "bg-[#16a34a]" },
+  { id: "inferno", label: "Inferno", color: "bg-[#dc2626]" },
+];
 
 export default function Home() {
   const [view, setView] = useState<"setup" | "active" | "complete">("setup");
@@ -20,6 +29,11 @@ export default function Home() {
   const [exerciseMapping, setExerciseMapping] = useState<Record<Rank, string>>(DEFAULT_RANK_MAPPING);
   const [activeDeck, setActiveDeck] = useState<WorkoutCard[]>([]);
   const [finalStats, setFinalStats] = useState<{ totalTime: number; calories: number } | null>(null);
+  const [theme, setTheme] = useState<Theme>("classic");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const handleStartWorkout = () => {
     const deck = generateDeck(numSuits, exerciseMapping);
@@ -98,7 +112,7 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-colors duration-500">
               <Dumbbell className="text-white w-6 h-6" />
             </div>
             <div>
@@ -113,7 +127,7 @@ export default function Home() {
 
         <Tabs defaultValue="deck" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-16 bg-secondary/50 p-1 mb-6 rounded-2xl">
-            <TabsTrigger value="deck" className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1 transition-all duration-300">
+            <TabsTrigger value="deck" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1 transition-all duration-300">
               <Settings2 className="w-4 h-4" />
               Deck Config
             </TabsTrigger>
@@ -123,50 +137,71 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="deck" className="animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:outline-none">
-            <div className="grid grid-cols-1 gap-6">
-              <Card className="bg-secondary/30 border-border p-6 space-y-8 rounded-3xl">
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[1, 2, 3, 4].map((s) => (
-                      <Button
-                        key={s}
-                        variant={numSuits === s ? "default" : "secondary"}
-                        onClick={() => setNumSuits(s)}
-                        className="h-14 font-black text-xl rounded-xl transition-all"
-                      >
-                        {s}
-                      </Button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic">Workout: {numSuits * 13} rounds.</p>
+          <TabsContent value="deck" className="animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:outline-none space-y-6">
+            <Card className="bg-secondary/30 border-border p-6 space-y-8 rounded-3xl">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-primary" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">App Theme</label>
                 </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {THEMES.map((t) => (
+                    <Button
+                      key={t.id}
+                      variant="ghost"
+                      onClick={() => setTheme(t.id)}
+                      className={cn(
+                        "h-14 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
+                        theme === t.id ? "border-primary bg-primary/10" : "border-transparent bg-secondary/50"
+                      )}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full", t.color)} />
+                      <span className="text-[9px] font-bold uppercase tracking-tighter">{t.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
-                  <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
-                  <div className="space-y-2">
-                    <SpinDial 
-                      label="Round Rest" 
-                      value={roundRestTime} 
-                      onChange={setRoundRestTime} 
-                      min={0}
-                    />
-                    {numSuits === 1 && (
-                      <div className="flex items-start gap-2 px-1 text-[9px] text-muted-foreground italic uppercase tracking-wider">
-                        <Info className="w-3 h-3 text-accent flex-shrink-0" />
-                        <span>Only applies between suits (2+ suits)</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
-                    <p className="text-3xl font-black tabular-nums">{formatTotalTime(totalSeconds)}</p>
-                  </div>
+              <div className="space-y-4">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((s) => (
+                    <Button
+                      key={s}
+                      variant={numSuits === s ? "default" : "secondary"}
+                      onClick={() => setNumSuits(s)}
+                      className="h-14 font-black text-xl rounded-xl transition-all"
+                    >
+                      {s}
+                    </Button>
+                  ))}
                 </div>
-              </Card>
-            </div>
+                <p className="text-xs text-muted-foreground italic">Workout: {numSuits * 13} rounds.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
+                <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
+                <div className="space-y-2">
+                  <SpinDial 
+                    label="Round Rest" 
+                    value={roundRestTime} 
+                    onChange={setRoundRestTime} 
+                    min={0}
+                  />
+                  {numSuits === 1 && (
+                    <div className="flex items-start gap-2 px-1 text-[9px] text-muted-foreground italic uppercase tracking-wider">
+                      <Info className="w-3 h-3 text-accent flex-shrink-0" />
+                      <span>Only applies between suits (2+ suits)</span>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
+                  <p className="text-3xl font-black tabular-nums">{formatTotalTime(totalSeconds)}</p>
+                </div>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="exercises" className="animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:outline-none">
