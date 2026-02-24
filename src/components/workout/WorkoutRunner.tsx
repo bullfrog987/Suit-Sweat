@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card as WorkoutCard, Suit, Rank } from "@/lib/workout-utils";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spades } from "lucide-react";
+import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { aiWorkoutCoach } from "@/ai/flows/ai-workout-coach";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,7 +108,7 @@ export function WorkoutRunner({
       case 'hearts': return <Heart className="w-8 h-8 text-red-500 fill-current" />;
       case 'diamonds': return <Diamond className="w-8 h-8 text-red-400 fill-current" />;
       case 'clubs': return <Club className="w-8 h-8 text-white fill-current" />;
-      case 'spades': return <Spades className="w-8 h-8 text-white fill-current" />;
+      case 'spades': return <Spade className="w-8 h-8 text-white fill-current" />;
     }
   };
 
