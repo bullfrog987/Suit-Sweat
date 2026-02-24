@@ -43,8 +43,36 @@ export function WorkoutRunner({
   const [totalRemaining, setTotalRemaining] = useState(initialTotalDuration);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const currentCard = deck[currentIndex];
-  const nextCard = deck[currentIndex + 1];
+  // Sound generator helper
+  const playBeep = (freq: number, duration: number) => {
+    try {
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration / 1000);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+      
+      // Close context to release resources
+      setTimeout(() => {
+        audioCtx.close();
+      }, duration + 100);
+    } catch (e) {
+      console.warn("Audio beep failed", e);
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -65,6 +93,17 @@ export function WorkoutRunner({
 
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
+
+  // Handle countdown beeps
+  useEffect(() => {
+    if (!isActive) return;
+    
+    if (timeLeft > 0 && timeLeft <= 3) {
+      playBeep(440, 150); // Short medium beep for 3, 2, 1
+    } else if (timeLeft === 0) {
+      playBeep(880, 600); // Longer higher beep for phase change
+    }
+  }, [timeLeft, isActive]);
 
   const handlePhaseTransition = () => {
     if (phase === "work") {
@@ -114,6 +153,9 @@ export function WorkoutRunner({
       case 'spades': return <Spade className="w-10 h-10 text-white fill-current" />;
     }
   };
+
+  const currentCard = deck[currentIndex];
+  const nextCard = deck[currentIndex + 1];
 
   const totalTimeForPhase = phase === "work" ? workTime : (phase === "round-rest" ? roundRestTime : restTime);
   const phaseProgress = totalTimeForPhase > 0 
