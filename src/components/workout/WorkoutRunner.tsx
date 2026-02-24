@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card as WorkoutCard, Suit, calculateTotalTime } from "@/lib/workout-utils";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade, Timer } from "lucide-react";
+import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade, Timer, Flame } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ interface WorkoutRunnerProps {
   restTime: number;
   roundRestTime: number;
   numSuits: number;
+  theme?: string;
   onComplete: (stats: { totalTime: number; calories: number }) => void;
 }
 
@@ -26,6 +27,7 @@ export function WorkoutRunner({
   restTime, 
   roundRestTime, 
   numSuits,
+  theme,
   onComplete 
 }: WorkoutRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -33,22 +35,17 @@ export function WorkoutRunner({
   const [timeLeft, setTimeLeft] = useState(workTime);
   const [isActive, setIsActive] = useState(false);
   
-  // Calculate the absolute initial duration for progress tracking
   const initialTotalDuration = useMemo(() => 
     calculateTotalTime(deck.length, workTime, restTime, roundRestTime, numSuits),
     [deck.length, workTime, restTime, roundRestTime, numSuits]
   );
 
-  // Track the total remaining time
   const [totalRemaining, setTotalRemaining] = useState(initialTotalDuration);
-  
-  // Track total elapsed for calorie calculation at end
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const currentCard = deck[currentIndex];
   const nextCard = deck[currentIndex + 1];
 
-  // Main Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -56,14 +53,12 @@ export function WorkoutRunner({
       interval = setInterval(() => {
         setElapsedSeconds((prev) => prev + 1);
         
-        // Decrement phase timer
         if (timeLeft > 0) {
           setTimeLeft((prev) => prev - 1);
         } else {
           handlePhaseTransition();
         }
 
-        // Decrement total remaining timer
         setTotalRemaining((prev) => Math.max(0, prev - 1));
       }, 1000);
     }
@@ -101,7 +96,6 @@ export function WorkoutRunner({
   };
 
   const skipPhase = () => {
-    // Subtract the remaining time of the CURRENT phase from totalRemaining
     setTotalRemaining((prev) => Math.max(0, prev - timeLeft));
     handlePhaseTransition();
   };
@@ -122,13 +116,10 @@ export function WorkoutRunner({
   };
 
   const totalTimeForPhase = phase === "work" ? workTime : (phase === "round-rest" ? roundRestTime : restTime);
-  
-  // Phase progress: fills from 0 to 100 as time passes
   const phaseProgress = totalTimeForPhase > 0 
     ? ((totalTimeForPhase - timeLeft) / totalTimeForPhase) * 100 
     : 100;
 
-  // Total workout progress: fills from 0 to 100 based on remaining time
   const totalWorkoutProgress = initialTotalDuration > 0
     ? ((initialTotalDuration - totalRemaining) / initialTotalDuration) * 100
     : 100;
@@ -137,7 +128,12 @@ export function WorkoutRunner({
     <div className="flex flex-col items-center justify-between gap-4 w-full max-w-2xl mx-auto py-4 min-h-screen px-4 overflow-hidden">
       {/* Top Persistent Total Progress */}
       <div className="w-full space-y-2">
-        <Progress value={totalWorkoutProgress} className="h-2 bg-secondary/50 rounded-full overflow-hidden" />
+        <div className="flex items-center gap-2">
+          <Progress value={totalWorkoutProgress} className="h-2 bg-secondary/50 rounded-full overflow-hidden flex-1" />
+          {theme === "inferno" && (
+            <Flame className="w-5 h-5 text-primary animate-pulse fill-current drop-shadow-[0_0_8px_rgba(255,100,0,0.5)]" />
+          )}
+        </div>
         <div className="w-full flex justify-between items-center px-4 py-2 bg-secondary/30 rounded-2xl border border-border/50 backdrop-blur-sm">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Workout Remaining</span>
