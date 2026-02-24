@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card as WorkoutCard, Suit, Rank } from "@/lib/workout-utils";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade } from "lucide-react";
+import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade, Timer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { aiWorkoutCoach } from "@/ai/flows/ai-workout-coach";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface WorkoutRunnerProps {
   deck: WorkoutCard[];
@@ -24,7 +25,6 @@ export function WorkoutRunner({
   workTime, 
   restTime, 
   roundRestTime, 
-  numSuits,
   onComplete 
 }: WorkoutRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,7 +32,8 @@ export function WorkoutRunner({
   const [timeLeft, setTimeLeft] = useState(workTime);
   const [isActive, setIsActive] = useState(false);
   const [aiMessage, setAiMessage] = useState<string>("");
-  const [startTime] = useState(Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const startTimeRef = useRef<number>(Date.now());
 
   const currentCard = deck[currentIndex];
   const nextCard = deck[currentIndex + 1];
@@ -53,15 +54,19 @@ export function WorkoutRunner({
     fetchAiCoach(phase, currentCard?.exerciseName);
   }, [currentIndex, phase, currentCard, fetchAiCoach]);
 
+  // Main Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (isActive && timeLeft > 0) {
+    if (isActive) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setElapsedSeconds((prev) => prev + 1);
+        if (timeLeft > 0) {
+          setTimeLeft((prev) => prev - 1);
+        } else {
+          handlePhaseTransition();
+        }
       }, 1000);
-    } else if (isActive && timeLeft === 0) {
-      handlePhaseTransition();
     }
 
     return () => clearInterval(interval);
@@ -89,7 +94,7 @@ export function WorkoutRunner({
 
   const finishWorkout = () => {
     setIsActive(false);
-    const totalMinutes = Math.floor((Date.now() - startTime) / 60000);
+    const totalMinutes = Math.floor(elapsedSeconds / 60);
     onComplete({
       totalTime: totalMinutes || 1,
       calories: (totalMinutes || 1) * 8,
@@ -98,6 +103,12 @@ export function WorkoutRunner({
 
   const skipPhase = () => {
     handlePhaseTransition();
+  };
+
+  const formatElapsedTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getSuitIcon = (suit: Suit) => {
@@ -113,41 +124,61 @@ export function WorkoutRunner({
   const progress = (timeLeft / totalTimeForPhase) * 100;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8 w-full max-w-2xl mx-auto py-8 min-h-screen px-4">
+    <div className="flex flex-col items-center justify-between gap-4 w-full max-w-2xl mx-auto py-6 min-h-screen px-4 overflow-hidden">
+      {/* Top Bar Stats */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-secondary/30 rounded-full border border-border/50 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <Timer className="w-4 h-4 text-primary" />
+          <span className="text-sm font-black tabular-nums">{formatElapsedTime(elapsedSeconds)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Progress</span>
+          <span className="text-sm font-black">{currentIndex + 1}/{deck.length}</span>
+        </div>
+      </div>
+
       {/* AI Motivation */}
-      <div className="w-full text-center min-h-[4rem] flex items-center justify-center px-4 animate-in fade-in duration-700">
-        <p className="text-accent italic font-medium text-lg md:text-xl leading-relaxed">
+      <div className="w-full text-center min-h-[3rem] flex items-center justify-center px-4">
+        <p className="text-accent italic font-medium text-base md:text-lg leading-tight animate-in fade-in slide-in-from-top-1 duration-500">
           {aiMessage ? `"${aiMessage}"` : "Concentrate. One rep at a time."}
         </p>
       </div>
 
       {/* Main Card Display */}
-      <Card className="w-full aspect-[2/3] max-w-[380px] card-gradient border-none shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-8 text-white">
+      <Card 
+        className={cn(
+          "w-full aspect-[2/3] max-w-[340px] border-none shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-8 text-white transition-all duration-700",
+          phase === "work" ? "card-gradient" : "bg-gradient-to-br from-emerald-600 to-teal-800"
+        )}
+      >
         {phase === "work" ? (
           <>
-            <div className="absolute top-8 left-8 flex flex-col items-center gap-1">
-              <span className="text-4xl font-black">{currentCard.rank}</span>
+            <div className="absolute top-6 left-6 flex flex-col items-center gap-1">
+              <span className="text-3xl font-black">{currentCard.rank}</span>
               {getSuitIcon(currentCard.suit)}
             </div>
-            <div className="text-center px-4">
-              <h2 className="text-5xl md:text-6xl font-black tracking-tight uppercase drop-shadow-2xl">
+            <div className="text-center px-4 space-y-4">
+              <div className="w-full flex justify-center opacity-20">
+                 {getSuitIcon(currentCard.suit)}
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight uppercase drop-shadow-2xl leading-none">
                 {currentCard.exerciseName || "Active"}
               </h2>
             </div>
-            <div className="absolute bottom-8 right-8 flex flex-col items-center gap-1 rotate-180">
-              <span className="text-4xl font-black">{currentCard.rank}</span>
+            <div className="absolute bottom-6 right-6 flex flex-col items-center gap-1 rotate-180">
+              <span className="text-3xl font-black">{currentCard.rank}</span>
               {getSuitIcon(currentCard.suit)}
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center space-y-8">
-            <h2 className="text-8xl font-black tracking-widest text-white/90 drop-shadow-2xl">
-              REST
+          <div className="flex flex-col items-center justify-center space-y-8 animate-in zoom-in duration-500">
+            <h2 className="text-7xl font-black tracking-widest text-white/90 drop-shadow-2xl">
+              {phase === "round-rest" ? "ROUND REST" : "REST"}
             </h2>
             {nextCard && (
-              <div className="bg-black/20 p-6 rounded-2xl backdrop-blur-sm border border-white/10 text-center animate-in zoom-in duration-500">
-                <p className="text-xs uppercase tracking-widest font-bold text-white/70 mb-2">Coming Up Next</p>
-                <p className="text-3xl font-black uppercase tracking-tight">{nextCard.exerciseName}</p>
+              <div className="bg-black/20 p-6 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-white/70 mb-2">Next Up</p>
+                <p className="text-2xl font-black uppercase tracking-tight">{nextCard.exerciseName}</p>
               </div>
             )}
           </div>
@@ -155,46 +186,45 @@ export function WorkoutRunner({
       </Card>
 
       {/* Timer & Controls */}
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-3">
-          <div className="text-8xl font-black tabular-nums tracking-tighter text-primary drop-shadow-xl">
+      <div className="w-full max-w-md space-y-4 pb-4">
+        <div className="text-center space-y-2">
+          <div className={cn(
+            "text-7xl font-black tabular-nums tracking-tighter transition-colors duration-300",
+            phase === "work" ? "text-primary" : "text-emerald-400"
+          )}>
             {timeLeft}s
           </div>
           <div className="px-8">
-            <Progress value={progress} className="h-4 bg-secondary" />
+            <Progress value={progress} className="h-3 bg-secondary" />
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-8">
+        <div className="flex items-center justify-center gap-6">
           <Button
             size="lg"
             variant="outline"
-            className="h-16 w-16 rounded-full border-2 border-primary/20 bg-secondary hover:bg-secondary/80 text-primary"
+            className="h-14 w-14 rounded-full border-2 border-primary/10 bg-secondary/50 hover:bg-secondary text-primary"
             onClick={skipPhase}
           >
-            <SkipForward className="h-8 w-8" />
+            <SkipForward className="h-6 w-6" />
           </Button>
 
           <Button
             size="lg"
-            className="h-24 w-24 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-transform active:scale-95"
+            className="h-20 w-20 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-transform active:scale-95"
             onClick={() => setIsActive(!isActive)}
           >
-            {isActive ? <Pause className="h-12 w-12 fill-current" /> : <Play className="h-12 w-12 fill-current ml-1" />}
+            {isActive ? <Pause className="h-10 w-10 fill-current" /> : <Play className="h-10 w-10 fill-current ml-1" />}
           </Button>
 
           <Button
             size="lg"
             variant="outline"
-            className="h-16 w-16 rounded-full border-2 border-primary/20 bg-secondary hover:bg-secondary/80 text-primary"
+            className="h-14 w-14 rounded-full border-2 border-primary/10 bg-secondary/50 hover:bg-secondary text-primary"
             onClick={finishWorkout}
           >
-            <CheckCircle2 className="h-8 w-8" />
+            <CheckCircle2 className="h-6 w-6" />
           </Button>
-        </div>
-
-        <div className="text-center text-xs font-bold text-muted-foreground uppercase tracking-widest pt-4 opacity-70">
-          Card {currentIndex + 1} of {deck.length}
         </div>
       </div>
     </div>
