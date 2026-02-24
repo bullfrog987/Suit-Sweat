@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "workout-bg",
+      "description": "Dark atmospheric fitness gym",
+      "imageUrl": "https://picsum.photos/seed/fitness/1920/1080",
+      "imageHint": "fitness gym"
+    },
+    {
+      "id": "card-back",
+      "description": "Abstract purple patterns for card back",
+      "imageUrl": "https://picsum.photos/seed/cards/400/600",
+      "imageHint": "abstract purple"
+    }
+  ]
+}
