@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SpinDial } from "@/components/workout/SpinDial";
 import { ExerciseSetup } from "@/components/workout/ExerciseSetup";
 import { WorkoutRunner } from "@/components/workout/WorkoutRunner";
-import { generateDeck, calculateTotalTime, Rank, Card as WorkoutCard } from "@/lib/workout-utils";
-import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History } from "lucide-react";
+import { generateDeck, calculateTotalTime, Rank, Card as WorkoutCard, DEFAULT_RANK_MAPPING } from "@/lib/workout-utils";
+import { Dumbbell, Timer, Flame, Trophy, Play, Settings2, History, LayoutGrid } from "lucide-react";
 
 export default function Home() {
   const [view, setView] = useState<"setup" | "active" | "complete">("setup");
@@ -15,7 +16,7 @@ export default function Home() {
   const [workTime, setWorkTime] = useState(30);
   const [restTime, setRestTime] = useState(15);
   const [roundRestTime, setRoundRestTime] = useState(60);
-  const [exerciseMapping, setExerciseMapping] = useState<Record<Rank, string>>({} as any);
+  const [exerciseMapping, setExerciseMapping] = useState<Record<Rank, string>>(DEFAULT_RANK_MAPPING);
   const [activeDeck, setActiveDeck] = useState<WorkoutCard[]>([]);
   const [finalStats, setFinalStats] = useState<{ totalTime: number; calories: number } | null>(null);
 
@@ -102,56 +103,72 @@ export default function Home() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Deck Settings */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="bg-secondary/30 border-border p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Settings2 className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-bold uppercase tracking-wider">Deck Config</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((s) => (
-                  <Button
-                    key={s}
-                    variant={numSuits === s ? "default" : "secondary"}
-                    onClick={() => setNumSuits(s)}
-                    className="h-12 font-bold text-lg"
-                  >
-                    {s}
-                  </Button>
-                ))}
+      <Tabs defaultValue="deck" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-14 bg-secondary/50 p-1 mb-8">
+          <TabsTrigger value="deck" className="data-[state=active]:bg-primary data-[state=active]:text-white h-full font-bold uppercase tracking-widest">
+            <Settings2 className="w-4 h-4 mr-2" />
+            Deck Config
+          </TabsTrigger>
+          <TabsTrigger value="exercises" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground h-full font-bold uppercase tracking-widest">
+            <LayoutGrid className="w-4 h-4 mr-2" />
+            Exercise Map
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="deck" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2 bg-secondary/30 border-border p-6 space-y-8">
+              <div className="space-y-4">
+                <label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
+                <div className="grid grid-cols-4 gap-3">
+                  {[1, 2, 3, 4].map((s) => (
+                    <Button
+                      key={s}
+                      variant={numSuits === s ? "default" : "secondary"}
+                      onClick={() => setNumSuits(s)}
+                      className="h-16 font-black text-2xl"
+                    >
+                      {s}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground italic">Your workout will consist of {numSuits * 13} cards.</p>
               </div>
-              <p className="text-xs text-muted-foreground italic">Total Cards: {numSuits * 13}</p>
-            </div>
 
-            <div className="space-y-6 pt-4">
-              <SpinDial label="Work Time (sec)" value={workTime} onChange={setWorkTime} />
-              <SpinDial label="Rest Time (sec)" value={restTime} onChange={setRestTime} />
-              <SpinDial label="Round Rest (sec)" value={roundRestTime} onChange={setRoundRestTime} />
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
+                <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
+                <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
+                <SpinDial label="Round Rest" value={roundRestTime} onChange={setRoundRestTime} />
+                <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
+                  <p className="text-xs uppercase tracking-widest font-bold text-primary mb-1">Estimated Time</p>
+                  <p className="text-4xl font-black tabular-nums">{Math.ceil(totalEstimatedTime / 60)}:00</p>
+                </div>
+              </div>
+            </Card>
 
-            <div className="bg-primary/10 p-4 rounded-xl border border-primary/20 text-center">
-              <p className="text-xs uppercase tracking-widest font-bold text-primary mb-1">Estimated Duration</p>
-              <p className="text-3xl font-black tabular-nums">{Math.ceil(totalEstimatedTime / 60)} min</p>
+            <div className="space-y-4">
+              <Card className="bg-secondary/20 border-border p-6 h-full flex flex-col items-center justify-center text-center">
+                <Timer className="w-12 h-12 text-primary/40 mb-4" />
+                <h3 className="font-bold uppercase tracking-wider mb-2">Ready to Sweat?</h3>
+                <p className="text-sm text-muted-foreground">Adjust your timers and suits to customize the intensity of your session.</p>
+              </Card>
             </div>
-          </Card>
-        </div>
+          </div>
+        </TabsContent>
 
-        {/* Right Column: Exercise Mapping */}
-        <div className="lg:col-span-2 space-y-6">
+        <TabsContent value="exercises" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Card className="bg-secondary/30 border-border p-6">
             <div className="flex items-center gap-2 mb-6">
               <Dumbbell className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-bold uppercase tracking-wider">Exercise Mapping</h2>
+              <h2 className="text-lg font-bold uppercase tracking-wider">Map Cards to Moves</h2>
             </div>
-            <ExerciseSetup onMappingChange={setExerciseMapping} />
+            <ExerciseSetup 
+              initialMapping={exerciseMapping}
+              onMappingChange={setExerciseMapping} 
+            />
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Persistent Start Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border z-50">

@@ -10,6 +10,17 @@ export interface Card {
 export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 export const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 
+export const DEFAULT_EXERCISES = [
+  "Pushups", "Squats", "Lunges", "Plank (sec)", "Burpees", 
+  "Mountain Climbers", "Situps", "Jumping Jacks", "High Knees", 
+  "Dips", "Diamond Pushups", "Russian Twists", "Leg Raises"
+];
+
+export const DEFAULT_RANK_MAPPING: Record<Rank, string> = RANKS.reduce((acc, rank, idx) => {
+  acc[rank] = DEFAULT_EXERCISES[idx] || "Rest";
+  return acc;
+}, {} as Record<Rank, string>);
+
 export function generateDeck(numSuits: number, rankToExercise: Record<Rank, string>): Card[] {
   const deck: Card[] = [];
   const activeSuits = SUITS.slice(0, numSuits);
@@ -19,7 +30,7 @@ export function generateDeck(numSuits: number, rankToExercise: Record<Rank, stri
       deck.push({
         suit,
         rank,
-        exerciseName: rankToExercise[rank],
+        exerciseName: rankToExercise[rank] || "Rest",
       });
     }
   }
@@ -42,8 +53,6 @@ export function calculateTotalTime(
 ): number {
   const totalWork = numCards * workTime;
   const totalBetweenRest = (numCards - 1) * restTime;
-  // Round rest occurs between suits (if more than 1 suit).
-  // e.g. if 4 suits, we have 3 round rests.
   const totalRoundRest = numSuits > 1 ? (numSuits - 1) * roundRestTime : 0;
   
   return totalWork + totalBetweenRest + totalRoundRest;

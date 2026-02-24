@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, CheckCircle2, Heart, Diamond, Club, Spade } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { aiWorkoutCoach } from "@/ai/flows/ai-workout-coach";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 interface WorkoutRunnerProps {
   deck: WorkoutCard[];
@@ -45,7 +45,7 @@ export function WorkoutRunner({
       });
       setAiMessage(result.message);
     } catch (e) {
-      console.error("AI Coach failed:", e);
+      // Errors handled by global emitter if necessary
     }
   }, []);
 
@@ -69,7 +69,6 @@ export function WorkoutRunner({
 
   const handlePhaseTransition = () => {
     if (phase === "work") {
-      // Finished a card. Check if we need round rest or regular rest.
       const isEndOfSuit = (currentIndex + 1) % 13 === 0 && currentIndex !== deck.length - 1;
       
       if (isEndOfSuit && roundRestTime > 0) {
@@ -79,11 +78,9 @@ export function WorkoutRunner({
         setPhase("rest");
         setTimeLeft(restTime);
       } else {
-        // Workout Finished
         finishWorkout();
       }
     } else {
-      // Finished rest, move to next card
       setPhase("work");
       setTimeLeft(workTime);
       setCurrentIndex((prev) => prev + 1);
@@ -94,8 +91,8 @@ export function WorkoutRunner({
     setIsActive(false);
     const totalMinutes = Math.floor((Date.now() - startTime) / 60000);
     onComplete({
-      totalTime: totalMinutes,
-      calories: totalMinutes * 8,
+      totalTime: totalMinutes || 1,
+      calories: (totalMinutes || 1) * 8,
     });
   };
 
@@ -105,10 +102,10 @@ export function WorkoutRunner({
 
   const getSuitIcon = (suit: Suit) => {
     switch (suit) {
-      case 'hearts': return <Heart className="w-8 h-8 text-red-500 fill-current" />;
-      case 'diamonds': return <Diamond className="w-8 h-8 text-red-400 fill-current" />;
-      case 'clubs': return <Club className="w-8 h-8 text-white fill-current" />;
-      case 'spades': return <Spade className="w-8 h-8 text-white fill-current" />;
+      case 'hearts': return <Heart className="w-10 h-10 text-red-500 fill-current" />;
+      case 'diamonds': return <Diamond className="w-10 h-10 text-red-400 fill-current" />;
+      case 'clubs': return <Club className="w-10 h-10 text-white fill-current" />;
+      case 'spades': return <Spade className="w-10 h-10 text-white fill-current" />;
     }
   };
 
@@ -116,41 +113,41 @@ export function WorkoutRunner({
   const progress = (timeLeft / totalTimeForPhase) * 100;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8 w-full max-w-2xl mx-auto py-8">
+    <div className="flex flex-col items-center justify-center gap-8 w-full max-w-2xl mx-auto py-8 min-h-screen px-4">
       {/* AI Motivation */}
-      <div className="w-full text-center px-4 animate-in fade-in duration-700">
-        <p className="text-accent italic font-medium text-lg leading-relaxed">
-          "{aiMessage || "Loading coach tips..."}"
+      <div className="w-full text-center min-h-[4rem] flex items-center justify-center px-4 animate-in fade-in duration-700">
+        <p className="text-accent italic font-medium text-lg md:text-xl leading-relaxed">
+          {aiMessage ? `"${aiMessage}"` : "Concentrate. One rep at a time."}
         </p>
       </div>
 
       {/* Main Card Display */}
-      <Card className="w-full aspect-[2/3] max-w-[400px] card-gradient border-none shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-8 text-white">
+      <Card className="w-full aspect-[2/3] max-w-[380px] card-gradient border-none shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-8 text-white">
         {phase === "work" ? (
           <>
-            <div className="absolute top-6 left-6 flex flex-col items-center gap-1">
-              <span className="text-3xl font-black">{currentCard.rank}</span>
+            <div className="absolute top-8 left-8 flex flex-col items-center gap-1">
+              <span className="text-4xl font-black">{currentCard.rank}</span>
               {getSuitIcon(currentCard.suit)}
             </div>
-            <div className="text-center space-y-4">
-              <h2 className="text-5xl font-black tracking-tight uppercase px-2 drop-shadow-lg">
-                {currentCard.exerciseName}
+            <div className="text-center px-4">
+              <h2 className="text-5xl md:text-6xl font-black tracking-tight uppercase drop-shadow-2xl">
+                {currentCard.exerciseName || "Active"}
               </h2>
             </div>
-            <div className="absolute bottom-6 right-6 flex flex-col items-center gap-1 rotate-180">
-              <span className="text-3xl font-black">{currentCard.rank}</span>
+            <div className="absolute bottom-8 right-8 flex flex-col items-center gap-1 rotate-180">
+              <span className="text-4xl font-black">{currentCard.rank}</span>
               {getSuitIcon(currentCard.suit)}
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <h2 className="text-7xl font-black tracking-widest text-white/90 drop-shadow-2xl">
+          <div className="flex flex-col items-center justify-center space-y-8">
+            <h2 className="text-8xl font-black tracking-widest text-white/90 drop-shadow-2xl">
               REST
             </h2>
             {nextCard && (
-              <div className="bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
-                <p className="text-sm uppercase tracking-widest font-bold text-white/70 mb-1">Next Up</p>
-                <p className="text-2xl font-black uppercase">{nextCard.exerciseName}</p>
+              <div className="bg-black/20 p-6 rounded-2xl backdrop-blur-sm border border-white/10 text-center animate-in zoom-in duration-500">
+                <p className="text-xs uppercase tracking-widest font-bold text-white/70 mb-2">Coming Up Next</p>
+                <p className="text-3xl font-black uppercase tracking-tight">{nextCard.exerciseName}</p>
               </div>
             )}
           </div>
@@ -158,15 +155,17 @@ export function WorkoutRunner({
       </Card>
 
       {/* Timer & Controls */}
-      <div className="w-full max-w-md space-y-6 px-4">
-        <div className="text-center space-y-2">
-          <div className="text-7xl font-black tabular-nums tracking-tighter text-primary drop-shadow-md">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-3">
+          <div className="text-8xl font-black tabular-nums tracking-tighter text-primary drop-shadow-xl">
             {timeLeft}s
           </div>
-          <Progress value={progress} className="h-3 bg-secondary" />
+          <div className="px-8">
+            <Progress value={progress} className="h-4 bg-secondary" />
+          </div>
         </div>
 
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-8">
           <Button
             size="lg"
             variant="outline"
@@ -181,7 +180,7 @@ export function WorkoutRunner({
             className="h-24 w-24 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-transform active:scale-95"
             onClick={() => setIsActive(!isActive)}
           >
-            {isActive ? <Pause className="h-10 w-10 fill-current" /> : <Play className="h-10 w-10 fill-current ml-1" />}
+            {isActive ? <Pause className="h-12 w-12 fill-current" /> : <Play className="h-12 w-12 fill-current ml-1" />}
           </Button>
 
           <Button
@@ -194,7 +193,7 @@ export function WorkoutRunner({
           </Button>
         </div>
 
-        <div className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest pt-4">
+        <div className="text-center text-xs font-bold text-muted-foreground uppercase tracking-widest pt-4 opacity-70">
           Card {currentIndex + 1} of {deck.length}
         </div>
       </div>
