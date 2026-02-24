@@ -1,3 +1,4 @@
+
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
 
@@ -17,7 +18,7 @@ export const DEFAULT_EXERCISES = [
 ];
 
 export const DEFAULT_RANK_MAPPING: Record<Rank, string> = RANKS.reduce((acc, rank, idx) => {
-  acc[rank] = DEFAULT_EXERCISES[idx] || "Rest";
+  acc[rank] = DEFAULT_EXERCISES[idx] || "Active";
   return acc;
 }, {} as Record<Rank, string>);
 
@@ -27,10 +28,12 @@ export function generateDeck(numSuits: number, rankToExercise: Record<Rank, stri
 
   for (const suit of activeSuits) {
     for (const rank of RANKS) {
+      // Use the provided mapping, but trim it and fallback to default if it's blank
+      const name = rankToExercise[rank]?.trim() || DEFAULT_RANK_MAPPING[rank];
       deck.push({
         suit,
         rank,
-        exerciseName: rankToExercise[rank] || "Rest",
+        exerciseName: name,
       });
     }
   }

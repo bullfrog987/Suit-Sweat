@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -86,81 +87,83 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 pb-28">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Dumbbell className="text-white w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter leading-none">Suit & Sweat</h1>
-            <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase mt-0.5">Card Game Workout</p>
-          </div>
-        </div>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <History className="w-5 h-5 text-muted-foreground" />
-        </Button>
-      </div>
-
-      <Tabs defaultValue="deck" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-16 bg-secondary/50 p-1 mb-6 rounded-2xl">
-          <TabsTrigger value="deck" className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1">
-            <Settings2 className="w-4 h-4" />
-            Deck Config
-          </TabsTrigger>
-          <TabsTrigger value="exercises" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1">
-            <LayoutGrid className="w-4 h-4" />
-            Exercises
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="deck" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="grid grid-cols-1 gap-6">
-            <Card className="bg-secondary/30 border-border p-6 space-y-8 rounded-3xl">
-              <div className="space-y-4">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map((s) => (
-                    <Button
-                      key={s}
-                      variant={numSuits === s ? "default" : "secondary"}
-                      onClick={() => setNumSuits(s)}
-                      className="h-14 font-black text-xl rounded-xl"
-                    >
-                      {s}
-                    </Button>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground italic">Workout: {numSuits * 13} rounds.</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
-                <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
-                <SpinDial label="Round Rest" value={roundRestTime} onChange={setRoundRestTime} />
-                <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
-                  <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
-                  <p className="text-3xl font-black tabular-nums">{Math.ceil(totalEstimatedTime / 60)}:00</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="exercises" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <Card className="bg-secondary/30 border-border p-5 rounded-3xl">
-            <div className="flex items-center gap-2 mb-6">
-              <Dumbbell className="w-4 h-4 text-accent" />
-              <h2 className="text-sm font-bold uppercase tracking-widest">Exercise Map</h2>
+    <div className="relative min-h-screen flex flex-col">
+      <div className="max-w-4xl mx-auto w-full p-4 md:p-8 space-y-6 pb-40 flex-1">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Dumbbell className="text-white w-6 h-6" />
             </div>
-            <ExerciseSetup 
-              initialMapping={exerciseMapping}
-              onMappingChange={setExerciseMapping} 
-            />
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-tighter leading-none">Suit & Sweat</h1>
+              <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase mt-0.5">Card Game Workout</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <History className="w-5 h-5 text-muted-foreground" />
+          </Button>
+        </div>
+
+        <Tabs defaultValue="deck" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-16 bg-secondary/50 p-1 mb-6 rounded-2xl">
+            <TabsTrigger value="deck" className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1 transition-all duration-300">
+              <Settings2 className="w-4 h-4" />
+              Deck Config
+            </TabsTrigger>
+            <TabsTrigger value="exercises" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground rounded-xl h-full font-black uppercase tracking-widest text-[10px] flex flex-col items-center justify-center gap-1 transition-all duration-300">
+              <LayoutGrid className="w-4 h-4" />
+              Exercise Map
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="deck" className="animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:outline-none">
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="bg-secondary/30 border-border p-6 space-y-8 rounded-3xl">
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Number of Suits</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[1, 2, 3, 4].map((s) => (
+                      <Button
+                        key={s}
+                        variant={numSuits === s ? "default" : "secondary"}
+                        onClick={() => setNumSuits(s)}
+                        className="h-14 font-black text-xl rounded-xl transition-all"
+                      >
+                        {s}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic">Workout: {numSuits * 13} rounds.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <SpinDial label="Work Time" value={workTime} onChange={setWorkTime} />
+                  <SpinDial label="Rest Time" value={restTime} onChange={setRestTime} />
+                  <SpinDial label="Round Rest" value={roundRestTime} onChange={setRoundRestTime} />
+                  <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex flex-col justify-center text-center">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-1">Total Time</p>
+                    <p className="text-3xl font-black tabular-nums">{Math.ceil(totalEstimatedTime / 60)}:00</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="exercises" className="animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:outline-none">
+            <Card className="bg-secondary/30 border-border p-5 rounded-3xl">
+              <div className="flex items-center gap-2 mb-6">
+                <Dumbbell className="w-4 h-4 text-accent" />
+                <h2 className="text-sm font-bold uppercase tracking-widest">Exercise Map</h2>
+              </div>
+              <ExerciseSetup 
+                initialMapping={exerciseMapping}
+                onMappingChange={setExerciseMapping} 
+              />
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Persistent Start Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-50">
